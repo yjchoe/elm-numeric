@@ -177,8 +177,8 @@ Elm.Native.Numeric.make = function(elm) {
         ret = [];
         for(i=0;i<m;i++) {
             row = [];
-            for(j=0;j<m;j++) { row[j] = A[i][j].toString(); }
-            ret[i] = row.join(', ');
+            for(j=0;j<n;j++) { row[j] = A[i][j].toString(); } // `m` to `n`: fixed by Y. Choe
+            ret[i] = row.join(','); // ', ' to ',': edited by Y. Choe
         }
         return ret.join('\n')+'\n';
     }
