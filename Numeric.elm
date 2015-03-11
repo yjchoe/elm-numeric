@@ -16,16 +16,14 @@ import String
     or a JavaScript float (as a result of vector-vector dot product).
     In the context of Elm, `Ndarray` is considered as an internal sructure,
     and the final output is expected to be presented using `fromArray`.
+
+    For representation purposes, we use the Elm List in nested form 
+    (currently implemented with type `List a`). Relevant functions are
+    `fromList` and `toList` in the below. Note that these conversions are 
+    *slow* and should only be called once each at the beginning and at the end
+    of all numerical computations.
 -}
 type Ndarray = Ndarray
-
-{-| For representation purposes, we provide a way to convert
-    the internal structure `Ndarray` to/from a nested `List` in Elm.
-    We call this `Ndlist`, which is a type of a `List`.
-
-    Converting to/from `Ndlist` is *slow*. This type should only be
-    used for viewing storing/viewing the final result in an Elm-friendly type.
--}
 
 {-| Initializes an array of dimensions specified by the `List` of `Int`s. 
     All entries are initialized to zero. 
@@ -49,7 +47,7 @@ vec = Native.Numeric.vec
 mat : Int -> Int -> Ndarray
 mat = Native.Numeric.mat
 
-rep : Ndarray -> Float -> Ndarray
+rep : Float -> List Int -> Ndarray
 rep = Native.Numeric.rep
 
 zeros : List Int -> Ndarray
@@ -69,16 +67,71 @@ ones = Native.Numeric.ones
 random : List Int -> Ndarray
 random = Native.Numeric.random
 
+{-| Both `identity` and `eye` create an `n` by `n` identity matrix where `n`
+    is an input.
+
+    identity 3 == fromList [[1,0,0],
+                            [0,1,0],
+                            [0,0,1]]
+-}
 identity : Int -> Ndarray
 identity = Native.Numeric.identity
 
 eye : Int -> Ndarray
 eye = Native.Numeric.identity
 
+
+{-| Elm representations -}
+
+toList : Ndarray -> List a
+toList = Native.Numeric.toList
+
+toCSV : Ndarray -> String
+toCSV = Native.Numeric.toCSV
+
+print : Ndarray -> String
+print = Native.Numeric.print
+
+
 {-| Slicing operations -}
 
+{-| This function reads `getBlock from to ndarray`. 
+    `from` and `to` are lists of indices specifying the starting and ending
+    indices of the block in each dimension. 
+
+    getBlock [1] [4] (fromList [1,2,3,4,5,6])    == fromList [2,3,4,5]
+    getBlock [1,0] [3,1] (fromList [[ 1, 2, 3],  == fromList [[ 4, 5],
+                                    [ 4, 5, 6],               [ 7, 8],
+                                    [ 7, 8, 9],               [10,11]]
+                                    [10,11,12]])  
+-}
 getBlock : List Int -> List Int -> Ndarray -> Ndarray
 getBlock = Native.Numeric.getBlock
+
+{-| This one reads `setBlock from to oldarray newarray`. 
+    `from` and `to` are analogous to those in `getBlock`, and `setBlock`
+    replaces the block in the `oldarray` with the `newarray`.
+
+    setBlock [1] [4] (fromList [1,2,3,4,5,6])    == fromList [1,0,0,0,0,1]
+                     (fromList [0,0,0,0])
+    setBlock [1,0] [3,1] (fromList [[ 1, 2, 3],  == fromList [[ 1, 2, 3],
+                                    [ 4, 5, 6],               [ 0, 0, 6],
+                                    [ 7, 8, 9],               [ 0, 0, 9],
+                                    [10,11,12]])              [ 0, 0, 12]]
+                         (fromList [[ 0, 0],
+                                    [ 0, 0],
+                                    [ 0, 0]])  
+-}
+setBlock : List Int -> List Int -> Ndarray -> Ndarray -> Ndarray
+setBlock = Native.Numeric.setBlock
+
+{-| Returns the diagonal of a multi-dimensional array.
+
+    getDiag (fromList [[1,2,3],[4,5,6]]) == fromList [1,5]
+-}
+getDiag : Ndarray -> Ndarray
+getDiag = Native.Numeric.getDiag
+
 
 {-| Unary entrywise operations -}
 
@@ -156,17 +209,17 @@ sub = Native.Numeric.sub
 
 {-| Matrix/Tensor routines -}
 
-{-|
-normalize : Ndarray -> Ndarray
-normalize x = 
--}
-
 det : Ndarray -> Float
 det = Native.Numeric.det
 
 diag : Ndarray -> Ndarray
 diag = Native.Numeric.diag
 
+{-| Returns the dimensions of the input array as an Elm `List Int`.
+
+    dim (fromList [3,5,1]) == [3]
+    dim (fromList [[3,5,1],[4,6,2]]) == [2,3]
+-}
 dim : Ndarray -> List Int
 dim = Native.Numeric.dim >> toList
 
@@ -203,13 +256,10 @@ dotVV = Native.Numeric.dotVV
 eig : Ndarray -> { lambda: Ndarray, v: Ndarray }
 eig = Native.Numeric.eig
 
-{-| Returns the diagonal of a multi-dimensional array.
+{-| Matrix inverse of a square matrix.
 
-    getDiag (fromList [[1,2,3],[4,5,6]]) == fromList [1,5]
+    inv (identity 5) == identity 5
 -}
-getDiag : Ndarray -> Ndarray
-getDiag = Native.Numeric.getDiag
-
 inv : Ndarray -> Ndarray
 inv = Native.Numeric.inv
 
@@ -229,7 +279,7 @@ norm2sq = Native.Numeric.norm2sq
 norminf : Ndarray -> Float
 norminf = Native.Numeric.norminf
 
-{-| `solve` gives the solution to the linear system Ax=b.
+{-| `solve` gives the solution to the linear system $Ax=b$.
     That is, `solve a b == x`.
 
     solve (identity 5) (vec 5) == vec 5
@@ -257,24 +307,22 @@ transpose = Native.Numeric.tr
 {-| Inputs are, in general, records, as many parameters are specifications
     of the optimization problem.
 
-defaultOption : 
-
-gradient(f,x)
+--gradient(f,x)
 
 gradient : {} -> Ndarray
 gradient = Native.Numeric.gradient
 
-uncmin(f,x0,tol,gradient,maxit,callback,options)
+--uncmin(f,x0,tol,gradient,maxit,callback,options)
 
 uncmin : {} -> Ndarray
 uncmin = Native.Numeric.uncmin
 
-solveLP(c,A,b,Aeq,beq,tol,maxit)
+--solveLP(c,A,b,Aeq,beq,tol,maxit)
 
 solveLP : {} -> Ndarray
 solveLP = Native.Numeric.solveLP
 
-solveQP(Dmat, dvec, Amat, bvec, meq, factorized) 
+--solveQP(Dmat, dvec, Amat, bvec, meq, factorized) 
 
 solveQP : {} -> Ndarray
 solveQP = Native.Numeric.solveQP
@@ -328,14 +376,3 @@ same = Native.Numeric.same
 
 xor : Ndarray -> Ndarray -> Ndarray
 xor = Native.Numeric.xor
-
-{-| Elm representation -}
-
-toList : Ndarray -> List a
-toList = Native.Numeric.toList
-
---toCSV : Ndarray -> IO.IO
---toCSV = Native.Numeric.toCSV
-
-print : Ndarray -> String
-print = Native.Numeric.print

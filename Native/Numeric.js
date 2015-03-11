@@ -4455,7 +4455,7 @@ Elm.Native.Numeric.make = function(elm) {
 
 
     /* Some extra auxiliary functions for Elm use */
-    rep_elm = function (dims, v) {
+    rep_elm = function (v, dims) {
       return numeric.rep(List.toArray(dims), v);
     }
     ndarray = function (dims) {
@@ -4475,6 +4475,14 @@ Elm.Native.Numeric.make = function(elm) {
     }
     mat = function (m,n) {
       return numeric.rep([m,n], 0);
+    }
+
+    getBlock_elm = function (from, to, x) {
+      return numeric.getBlock(x, List.toArray(from), List.toArray(to));
+    }
+
+    setBlock_elm = function (from, to, x, y) {
+      return numeric.setBlock(x, List.toArray(from), List.toArray(to), y);
     }
 
     /* redefining record-based results (to ensure lower-case field names) */
@@ -4524,6 +4532,16 @@ Elm.Native.Numeric.make = function(elm) {
     random   : rand,
     identity : numeric.identity,
 
+    /* Elm representation */
+    toList   : toList,
+    toCSV    : numeric.toCSV,
+    print    : numeric.prettyPrint,
+
+    /* Slicing operations */
+    getBlock : F3(getBlock_elm),
+    setBlock : F4(setBlock_elm),
+    getDiag  : numeric.getDiag,
+
     /* Unary entrywise operations */
     abs      : numeric.abs,
     acos     : numeric.acos,
@@ -4556,7 +4574,6 @@ Elm.Native.Numeric.make = function(elm) {
     dot      : F2(numeric.dot),
     dotVV    : F2(numeric.dotVV),
     eig      : eig_elm,
-    getDiag  : numeric.getDiag,
     inv      : numeric.inv,
     linspace : F3(numeric.linspace), 
     norm2    : numeric.norm2,
@@ -4587,12 +4604,8 @@ Elm.Native.Numeric.make = function(elm) {
     not      : numeric.not,
     or       : F2(numeric.or), 
     same     : F2(numeric.same),
-    xor      : F2(numeric.xor),
+    xor      : F2(numeric.xor)
 
-    /* Elm representation */
-    toList   : toList,
-    toCSV    : numeric.toCSV,
-    print    : numeric.prettyPrint
   };
 
 };
