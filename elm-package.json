@@ -2,7 +2,7 @@
     "version": "0.0.1",
     "summary": "Fast large-scale numerical operations in Elm",
     "repository": "https://github.com/yjchoe/elm-numeric.git",
-    "license": "BSD3",
+    "license": "MIT",
     "source-directories": [
         "."
     ],
